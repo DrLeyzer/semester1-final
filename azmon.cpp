@@ -10,12 +10,13 @@ using namespace std;
 //ofstream students_db("studentsdb.txt", ios::app);
 
 const int phone_code = 123456;
-string line,temp_std_phonenum, temp_std_idnum, temp_input,temp_ketabdar_username, temp_password_ketabdar,temp_stdpass, temp_stdid, global_stdnumber, global_stdid;
+string temp_bookname, line,temp_std_phonenum, temp_std_idnum, temp_input,temp_ketabdar_username, temp_password_ketabdar,temp_stdpass, temp_stdid, global_stdnumber, global_stdid;
 int id_len, i, temp_code, temp_book_id, j, last_std_info_loc=0, last_book_loc=0,n, temp_booknum;
 char temp_switchs;
 bool temp_bool=false;
 
 void db_reader(); //inactive
+bool search_book(string name);
 void clearScreen();
 bool phone_valid(string num);
 void ketabdar_panel();
@@ -30,7 +31,7 @@ void borrow_book();
 void giving_book();
 bool book_exist(int booknum);
 
-class c_ketabdar {
+class c_ketabdars {
 private:
 	const string username="user";
 	const string password="pass";
@@ -44,7 +45,7 @@ public:
 			if (exit_check(temp_input)) {
 				clearScreen();
 				cout << "Exit successfully committed.";
-				main();
+				return false;
 			}
 			else
 				if (temp_input == username) {
@@ -54,7 +55,7 @@ public:
 						cin >> temp_password_ketabdar;
 						if (exit_check(temp_password_ketabdar)) {
 							cout << "Exit successfully committed.";
-							main();
+							return false;
 						}
 						else
 							if (temp_password_ketabdar == password) {
@@ -506,24 +507,84 @@ void ketabdar_panel() {
 //completed
 void borrow_book() {
 	clearScreen();
-	available_book_list();
-	cout << "\n\nenter the book id that you want to borrow : ";
-	book_id_checker:
-	cin >> temp_booknum;
-	if (book_exist(temp_booknum)) {
-		for (i = 0; i < 10000; i++) {
-			if (book.book_id[i] == temp_booknum) {
-				book.available[i] = false;
-				book.who_borrows_id[i] = global_stdid;
-				book.who_borrows_num[i] = global_stdnumber;
-				clearScreen();
-				cout << "\nnow you can borrow your book  by giving book id to ketabdar.\n";
-			}
-		}
+borrow:
+	cout << "\nType 'exit' at any time to exit.\n";
+	cout << "\nare you looking for specific book ? (y-search by name / n-book list) : ";
+	cin >> temp_input;
+	if (exit_check(temp_input)) {
+		clearScreen();
+		cout << "Exit successfully committed.";
+		student_panel();
 	}
 	else {
-		cout << "\nwrong book id! try again : ";
-		goto book_id_checker;
+		temp_switchs=temp_input[0];
+		switch (temp_switchs) {
+		case 'n':
+			available_book_list();
+			cout << "\n\nenter the book id that you want to borrow : ";
+		book_id_checker:
+			cin >> temp_booknum;
+			if (book_exist(temp_booknum)) {
+				for (i = 0; i < last_book_loc; i++) {
+					if (book.book_id[i] == temp_booknum) {
+						borrow2:
+						book.available[i] = false;
+						book.who_borrows_id[i] = global_stdid;
+						book.who_borrows_num[i] = global_stdnumber;
+						clearScreen();
+						cout << "\nnow you can borrow your book  by giving book id to ketabdar.\n";
+					}
+				}
+			}
+			else {
+				cout << "\nwrong book id! try again : ";
+				goto book_id_checker;
+			}
+		case 'y':
+			cout << "\nenter the book title that you are looking for : ";
+			cin >> temp_bookname;
+			if (search_book(temp_bookname)) {
+				clearScreen();
+				cout << "\nthe book is available!\nname : " << book.book_name[i] << " - book id : " << book.book_id[i]<<"\ndo you want to borrow that ? (y-yes / n-no) : ";
+				book_exist:
+				cin >> temp_switchs;
+				switch (temp_switchs)
+				{
+				case 'y':
+					goto borrow2;
+					break;
+				case 'n':
+					cout << "\nmoving back to the panel...";
+					student_panel();
+					break;
+				default:
+					cout << "\nwrong input! try again : ";
+					goto book_exist;
+					break;
+				}
+			}
+			else {
+				cout << "\nthis book does not exist in this library at the time, do you want to check available books list ? (y-yes / n-no) : ";
+				book_not_exist:
+				cin >> temp_switchs;
+				switch (temp_switchs)
+				{
+				case 'y':
+					goto borrow;
+					break;
+				case 'n':
+					student_panel();
+					break;
+				default:
+					cout << "\nwrong input! try again : ";
+					goto book_not_exist;
+					break;
+				}
+			}
+			break;
+		default:
+			break;
+		}
 	}
 }
 //completed
@@ -543,7 +604,7 @@ bool phone_valid(string num) {
 }
 //completed
 bool book_exist(int booknum) {
-	for (i = 0; i < 10000; i++) {
+	for (i = 0; i < last_book_loc; i++) {
 		if (book.book_id[i]== booknum) {
 			temp_bool = true;
 			break;
@@ -555,45 +616,37 @@ bool book_exist(int booknum) {
 }
 //completed
 void entering_books() {
-	cout << "\nType 'exit' at any time to exit.\n";
 	cout << "\nEnter the number of books: ";
-	cin >> temp_input;
-	if (exit_check(temp_input)) {
-		clearScreen();
-		cout << "Exit successfully committed.";
-		ketabdar_panel();
-	}
-	else {
-		clearScreen();
-		for (int j = 0; j < n; j++) {
-			cout << "\nType 'exit' at any time to exit.\n";
-			int i = last_book_loc;
-			cout << "\nEnter the book title: ";
-			cin >> book.book_name[i];
-			if (exit_check(book.book_name[i])) {
-				clearScreen();
-				cout << "Exit successfully committed.";
-				break;
-			}
-			cout << "\nEnter the book ID: ";
-			cin >> temp_book_id;
-			while (book_exist(temp_book_id)) {
-				cout << "\nThis book ID already exists. Enter a different ID: ";
-				cin >> temp_book_id;
-			}
-			book.book_id[i] = temp_book_id;
-			book.available[i] = true;
-			book.book_loc[i] = i;
-			last_book_loc++;
+	cin >> n;
+	clearScreen();
+	for (int j = 0; j < n; j++) {
+		cout << "\nType 'exit' at any time to exit.\n";
+		int i = last_book_loc;
+		cout << "\nEnter the book title: ";
+		cin >> book.book_name[i];
+		if (exit_check(book.book_name[i])) {
 			clearScreen();
-			cout << "\nSuccessful!";
+			cout << "Exit successfully committed.";
+			break;
 		}
+		cout << "\nEnter the book ID: ";
+		cin >> temp_book_id;
+		while (book_exist(temp_book_id)) {
+			cout << "\nThis book ID already exists. Enter a different ID: ";
+			cin >> temp_book_id;
+		}
+		book.book_id[i] = temp_book_id;
+		book.available[i] = true;
+		book.book_loc[i] = i;
+		last_book_loc++;
+		clearScreen();
+		cout << "\nSuccessful!";
 	}
 }
 //completed
 void available_book_list() {
 	cout << "\navailable books : \n";
-	for (i = 0; i < 10000; i++) {
+	for (i = 0; i < last_book_loc; i++) {
 		if (book.available[i]) {
 			cout << "\n" << book.book_name[i] << " - book id : " << book.book_id[i] << " - book loc : " << book.book_loc[i];
 		}
@@ -602,7 +655,7 @@ void available_book_list() {
 //completed
 void unavailable_book_list() {
 	cout << "\nunavailable books : \n";
-	for (i = 0; i < 10000; i++) {
+	for (i = 0; i < last_book_loc; i++) {
 		if (!book.available[i]&&book.book_id[i]) {
 			cout << "\n" << book.book_name[i] << " - book id : " << book.book_id[i] << " - book loc : " << book.book_loc[i] << " - student who borrow this : " << book.who_borrows_id[i] << " - and its phone numbed is : " << book.who_borrows_num[i];
 		}
@@ -611,7 +664,7 @@ void unavailable_book_list() {
 //completed
 void std_borrow_list(string student_id) {
 	cout << "\nyour borrow list is : \n";
-	for (i = 0; i < 10000; i++) {
+	for (i = 0; i < last_book_loc; i++) {
 		if (student_id == book.who_borrows_id[i]) {
 			cout << "\n" << book.book_name[i] << " - book id : " << book.book_id[i];
 		}
@@ -632,7 +685,7 @@ book_id_checkerr:
 	cin >> temp_booknum;
 	if (book_exist(temp_booknum)) {
 		clearScreen();
-		for (i = 0; i < 10000; i++) {
+		for (i = 0; i < last_book_loc; i++) {
 			if (book.book_id[i] == temp_booknum) {
 				book.available[i] = true;
 				cout << "\nsuccusful!\nnow you can give your book to ketabdar.";
@@ -647,5 +700,18 @@ book_id_checkerr:
 //completed
 void clearScreen() {
 	system("cls");
+}
+//completed
+bool search_book(string name) {
+	temp_bool = false;
+	for (i = 0; i < last_book_loc; i++) {
+		if (name == book.book_name[i]&&book.available[i]) {
+			temp_bool = true;
+			break;
+		}
+		else 
+			temp_bool = false;
+	}
+	return temp_bool;
 }
 //completed
