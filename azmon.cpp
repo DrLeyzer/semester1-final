@@ -604,7 +604,7 @@ bool phone_valid(string num) {
 }
 //completed
 bool book_exist(int booknum) {
-	for (i = 0; i < last_book_loc; i++) {
+	for (i = 0; i < 10000; i++) {
 		if (book.book_id[i]== booknum) {
 			temp_bool = true;
 			break;
